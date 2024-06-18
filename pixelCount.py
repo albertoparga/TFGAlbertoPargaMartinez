@@ -1,7 +1,7 @@
 import ee
 import datetime
-import time
 import os
+import geemap
 
 # Nombre del archivo donde se guardará el nombre del proyecto
 archivo_proyecto = 'nombre_proyecto.txt'
@@ -144,41 +144,19 @@ def getCount():
             except Exception as e:
                 print(f'Error in iteration {i}:', e)
 
-        # Exportar a Google Drive
-        task = ee.batch.Export.table.toDrive(
-            collection=combinedFc,
-            description='pixel_counts_export',
-            folder='earthengine',
-            fileFormat='CSV'
-        )
+         # Exportar directamente al sistema de archivos local usando geemap
+        filename = 'pixel_counts_export_from_script.csv'
+        geemap.ee_export_vector_to_drive(combinedFc, filename=filename)
 
-        print(f"Exportando CSV a Google Drive. Encontrará el archivo en la carpeta /earthengine.")
-        task.start()
-
-        # Función para verificar el estado de la tarea
-        def check_task_status(task_id):
-            status = ee.data.getTaskStatus(task_id)[0]
-            return status['state']
-
-        # Esperar a que la tarea se complete
-        task_id = task.id
-        while True:
-            status = check_task_status(task_id)
-            print(f"Estado de la exportación: {status}")
-            if status in ['COMPLETED', 'FAILED']:
-                break
-            time.sleep(10)  # Esperar 10 segundos antes de volver a verificar
-
-        if status == 'COMPLETED':
-            return 0
-        elif status == 'FAILED':
-            return "Failed export"
+        print(f"Exportando CSV a {filename}.")
+        
+        return 0
 
     except Exception as e:
         return e
 
 # Función para leer el nombre del proyecto desde el archivo
-def leer_nombre_proyecto(archivo):
+def read_proyect(archivo):
     if os.path.exists(archivo):
         with open(archivo, 'r') as file:
             nombre_proyecto = file.read().strip()
@@ -186,24 +164,24 @@ def leer_nombre_proyecto(archivo):
     return None
 
 # Función para guardar el nombre del proyecto en el archivo
-def guardar_nombre_proyecto(archivo, nombre_proyecto):
+def save_proyect(archivo, nombre_proyecto):
     with open(archivo, 'w') as file:
         file.write(nombre_proyecto)
 
-# Función para borrar el contenido de un archivo
-def borrar_contenido_archivo(archivo):
+# Función para borrar el contenido del archivo que almacena el nombre del proyecto
+def delete_proyect(archivo):
     with open(archivo, 'w') as file:
         pass  # Abrir en modo 'w' automáticamente borra el contenido
 
 # Función para obtener el nombre del proyecto
 def proyect():
     # Intentar leer el nombre del proyecto desde el archivo
-    mi_proyecto = leer_nombre_proyecto(archivo_proyecto)
+    mi_proyecto = read_proyect(archivo_proyecto)
 
     # Si el archivo no existe o está vacío, pedir al usuario el nombre del proyecto
     if not mi_proyecto:
         mi_proyecto = input("Por favor, introduzca el nombre de su proyecto de Google Earth Engine: ")
-        guardar_nombre_proyecto(archivo_proyecto, mi_proyecto)
+        save_proyect(archivo_proyecto, mi_proyecto)
         
     return mi_proyecto
 
@@ -221,6 +199,6 @@ if __name__ == "__main__":
                 print("Error count. Ejecución fallida durante el recuento de píxeles: ", result)
         else:
             print("Error init. Fallo al acceder al proyecto: ", initialize)
-            borrar_contenido_archivo(archivo_proyecto)
+            delete_proyect(archivo_proyecto)
     else:
         print("Error auth. Fallo en la autenticación:", autenticacion)
