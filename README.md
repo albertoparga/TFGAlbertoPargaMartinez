@@ -5,4 +5,4 @@ Título: Uso de Google Earth Engine dentro dun contorno de estimación de indica
 
 Autor: Alberto Parga Martínez
 
-Tutor: Joaquín Ángel Triñanes Fernandez
+Tutor: Joaquín Ángel Triñanes Fernández
